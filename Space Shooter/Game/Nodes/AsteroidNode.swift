@@ -9,8 +9,10 @@ class AsteroidNode: SKSpriteNode {
         shapeNode.fillColor = .gray
         shapeNode.strokeColor = .darkGray
         shapeNode.lineWidth = 2
+        
+        let textureList = ["Asteroid 1", "Asteroid 2", "Asteroid 3"]
 
-        let texture = SKTexture(imageNamed: "Asteroid 3")
+        let texture = SKTexture(imageNamed: textureList.randomElement()!)
         let asteroid = AsteroidNode(texture: texture, color: .clear, size: CGSize(width: actualSize, height: actualSize))
         asteroid.name = "asteroid"
         

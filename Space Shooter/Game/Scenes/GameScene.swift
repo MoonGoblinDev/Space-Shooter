@@ -250,25 +250,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
+    // In GameScene.swift - gameOver() method
+
     func gameOver() {
         print("Game Over - Transitioning to GameOverScene")
-        isGameOver = true // Set flag to stop updates, input, and further collision processing
-        
-        // Stop all actions in this scene (like spawning)
+        isGameOver = true
         self.removeAllActions()
-        // Optionally, remove all children except perhaps a background if it's managed differently.
-        // For now, transitioning will remove them implicitly.
-
-        // Prevent further player input processing in this scene
         keysPressed.removeAll()
         
         if let view = self.view {
-            // Pass the current score to the GameOverScene
-            let gameOverScene = GameOverScene(size: view.bounds.size, score: self.score)
-            gameOverScene.scaleMode = self.scaleMode // Or set explicitly, e.g., .resizeFill
+                let gameOverScene = GameOverScene(size: view.bounds.size, score: self.score)
+                gameOverScene.scaleMode = self.scaleMode
 
-            let transition = SKTransition.doorsCloseHorizontal(withDuration: 0.8) // Or another cool transition
-            view.presentScene(gameOverScene, transition: transition)
-        }
+                // Let's say your transition is 0.8 seconds
+                let transition = SKTransition.doorsCloseHorizontal(withDuration: 0.8)
+                view.presentScene(gameOverScene, transition: transition)
+            }
     }
 }
