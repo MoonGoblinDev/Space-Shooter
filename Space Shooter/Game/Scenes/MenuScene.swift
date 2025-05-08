@@ -3,13 +3,39 @@ import SwiftUI
 
 class MenuScene: SKScene {
 
-    override func didMove(to view: SKView) {
-        backgroundColor = .black
-        anchorPoint = CGPoint(x: 0.5, y: 0.5) // Center anchor for easier positioning
+    private var backgroundNodes: [SKSpriteNode] = []
+    private var lastBackgroundUpdateTime: TimeInterval = 0
 
+    override func didMove(to view: SKView) {
+        backgroundColor = .black // Fallback color
+        anchorPoint = CGPoint(x: 0.5, y: 0.5) // Center anchor
+
+        setupScrollingBackground() // Call the new setup method
         setupTitle()
         setupInstructions()
         setupStaticPlayer()
+    }
+
+    func setupScrollingBackground() {
+
+        let backgroundTexture = SKTexture(imageNamed: "Nebula Blue")
+
+        // Calculate scaled size to fit scene height while maintaining aspect ratio
+        let aspectRatio = backgroundTexture.size().width / backgroundTexture.size().height
+        let scaledHeight = size.height
+        let scaledWidth = scaledHeight * aspectRatio
+
+        for i in 0..<2 {
+            let backgroundNode = SKSpriteNode(texture: backgroundTexture)
+            backgroundNode.size = CGSize(width: scaledWidth, height: scaledHeight)
+            // Position for anchorPoint (0.5, 0.5)
+            // Nodes are positioned relative to the scene's center (0,0)
+            // The first node's center is at x=0. The second node's center is to its right.
+            backgroundNode.position = CGPoint(x: CGFloat(i) * scaledWidth, y: 0)
+            backgroundNode.zPosition = Constants.ZPositions.background
+            backgroundNodes.append(backgroundNode)
+            addChild(backgroundNode)
+        }
     }
 
     func setupTitle() {
@@ -69,12 +95,37 @@ class MenuScene: SKScene {
         }
     }
 
-    // We don't need update or physics interactions in the menu scene
     override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
-    }
-}
+            // Called before each frame is rendered
+            
+            // Calculate deltaTime for background scroll
+            if lastBackgroundUpdateTime.isZero {
+                lastBackgroundUpdateTime = currentTime
+            }
+            let deltaTime = currentTime - lastBackgroundUpdateTime
+            lastBackgroundUpdateTime = currentTime
 
+            scrollBackground(deltaTime: deltaTime)
+        }
+
+        func scrollBackground(deltaTime: TimeInterval) {
+            guard !backgroundNodes.isEmpty else { return }
+
+            let scrollAmount = Constants.backgroundScrollSpeed * CGFloat(deltaTime)
+            let sceneLeftEdge = -size.width / 2 // For anchorPoint (0.5, 0.5)
+
+            for backgroundNode in backgroundNodes {
+                backgroundNode.position.x -= scrollAmount
+
+                // Check if the node's right edge has scrolled past the scene's left edge
+                if (backgroundNode.position.x + backgroundNode.size.width / 2) < sceneLeftEdge {
+                    // Reposition it to the right of the other background node
+                    // The total width of the two backgrounds is backgroundNode.size.width * 2
+                    backgroundNode.position.x += backgroundNode.size.width * CGFloat(backgroundNodes.count)
+                }
+            }
+        }
+    }
 #if DEBUG // Optional: Ensures this code is only compiled for Debug builds
 @available(macOS 11.0, *) // SpriteView is available from macOS 11
 struct MenuScene_Previews: PreviewProvider {

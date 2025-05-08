@@ -26,8 +26,14 @@ struct Constants {
     static let asteroidSpeed: CGFloat = 100.0
 
     static let playerShootCooldown: TimeInterval = 0.3
-    static let playerInitialHealth: Int = 3
+        static let playerInitialHealth: Int = 3
+        static let enemyInitialHealth: Int = 3
+        static let asteroidInitialHealth: Int = 4
+        
+        static let enemySpawnInterval: TimeInterval = 1.5
+        static let asteroidSpawnInterval: TimeInterval = 2.5
     
-    static let enemySpawnInterval: TimeInterval = 1.5
-    static let asteroidSpawnInterval: TimeInterval = 2.5
+    static let enemySineAmplitude: CGFloat = 40.0  // How far up/down from the center line
+        static let enemySineFrequency: CGFloat = 1.0   // Cycles per second (e.g., 1.0 means one full up/down cycle per second)
+    static let backgroundScrollSpeed: CGFloat = 20.0
 }

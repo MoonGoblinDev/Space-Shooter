@@ -1,26 +1,20 @@
 import SpriteKit
 import SwiftUI
 
-class PlayerNode: SKSpriteNode {
-    var health: Int = Constants.playerInitialHealth
+class PlayerNode: SKSpriteNode, Damageable { // Conform to Damageable
+    var health: Int = Constants.playerInitialHealth {
+        didSet {
+            // Notify GameScene to update health label
+            if let scene = self.scene as? GameScene {
+                scene.updateHealthLabel()
+            }
+        }
+    }
     private var lastShootTime: TimeInterval = 0
     private var thrusterEmitter: SKEmitterNode?
 
     static func newInstance(size: CGSize) -> PlayerNode {
-        // Create a triangle path
-        let path = CGMutablePath()
-        path.move(to: CGPoint(x: 0, y: size.height / 2))
-        path.addLine(to: CGPoint(x: size.width / 2, y: 0)) // Tip pointing right
-        path.addLine(to: CGPoint(x: 0, y: -size.height / 2))
-        path.addLine(to: CGPoint(x: -size.width / 2, y: 0)) // Back edge
-        path.closeSubpath()
-
-        let shapeNode = SKShapeNode(path: path)
-        shapeNode.fillColor = .green
-        shapeNode.strokeColor = .green
-        shapeNode.lineWidth = 2
-
-        // Create a texture from the shape node
+        // ... (rest of the static func newInstance remains the same)
         let texture = SKTexture(imageNamed: "Spaceship 1")
         let player = PlayerNode(texture: texture, color: .clear, size: CGSize(width: 150, height: 75))
         player.name = "player"
@@ -40,61 +34,74 @@ class PlayerNode: SKSpriteNode {
         guard currentTime - lastShootTime > Constants.playerShootCooldown else { return }
         lastShootTime = currentTime
 
-        // The size here is for the physics body of the projectile.
-        // The visual extent will be determined by the particle effect.
-        let projectile = ProjectileNode.newInstance(type: .player, size: CGSize(width: 8, height: 8)) // Smaller hitbox
+        let projectile = ProjectileNode.newInstance(type: .player, size: CGSize(width: 8, height: 8))
         
         let projectileSpawnOffset: CGFloat = 5
         projectile.position = CGPoint(x: self.position.x + self.size.width / 2, y: self.position.y - 20)
         scene.addChild(projectile)
 
-        // The projectile node itself moves, and the emitter is its child.
         let moveAction = SKAction.moveBy(x: Constants.projectileSpeed * 2, y: 0, duration: 2.0)
-        
-        // When the projectile is removed, call detonate to handle particle fadeout
         let detonateAction = SKAction.run { projectile.detonate() }
-        // If moveAction completes (goes off-screen), then detonate.
         projectile.run(SKAction.sequence([moveAction, detonateAction]))
     }
 
-    func takeDamage(amount: Int = 1) {
+    // MARK: - Damageable
+    func takeDamage(amount: Int, in scene: SKScene?) { // Added 'in scene' parameter
         health -= amount
         if health < 0 {
             health = 0
         }
-        // Add visual feedback for damage later (e.g., blinking)
+        
+        animateDamage(tintRed: true, shakeIntensity: 8.0) // Player shakes more
         print("Player health: \(health)")
+
+        if health <= 0 {
+            // Player explosion/destruction is handled by GameScene's gameOver logic
+            // but we can still call explode for consistency if player had its own visual boom
+            // For now, GameScene handles the transition
+            if let gameScene = scene as? GameScene {
+                gameScene.gameOver()
+            }
+        }
     }
+
+    // explode() for PlayerNode might be different or managed by GameScene
+    func explode(in scene: SKScene?) {
+        // Player explosion is typically handled by the game over sequence
+        // For now, if GameScene doesn't handle it, it would remove itself.
+        // But since GameScene's gameOver() is called, this might not be needed
+        // or could trigger a specific player explosion visual before game over.
+        print("Player destroyed - Game Over sequence should be triggered by GameScene.")
+        // To be safe, if gameOver wasn't called:
+        // self.removeFromParent()
+    }
+    // animateDamage is provided by the Damageable extension
+
     private func setupThruster() {
             if let emitter = SKEmitterNode(fileNamed: "ThrusterEffect.sks") {
                 emitter.position = CGPoint(x: -60, y: -self.size.height / 2 + 30)
-
-                
-                self.addChild(emitter) // Add emitter as a child of the player initially
+                self.addChild(emitter)
                 self.thrusterEmitter = emitter
-
             } else {
                 print("Error: Could not load ThrusterEffect.sks")
             }
         }
     public func didMoveToScene() {
             if let thruster = self.thrusterEmitter, let scene = self.scene {
-                // Crucial step: Set the targetNode for world space simulation
-                // This makes the particles emit into the scene's coordinate space,
-                // appearing as if they are left behind.
                 thruster.targetNode = scene
             }
         }
     func updateThruster(isMoving: Bool) {
         didMoveToScene()
             if isMoving {
-                thrusterEmitter?.particleBirthRate = 200 // Or your desired rate for active thrust
-                // Optional: Could also increase particle speed or change color
+                thrusterEmitter?.particleBirthRate = 200
             } else {
-                thrusterEmitter?.particleBirthRate = 20 // A small idle flicker, or 0 to turn off
+                thrusterEmitter?.particleBirthRate = 20
             }
         }
 }
+
+// ... (Keep the Previews if you use them)
 
 #if DEBUG
 @available(macOS 11.0, *)
