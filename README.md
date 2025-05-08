@@ -254,7 +254,7 @@ Represents space asteroids.
 
 *   **Conforms to `Damageable`**.
 *   **`static func newInstance(...)`**: Factory method.
-    *   Loads "Asteroid 3" texture.
+    *   Loads "Asteroid" texture.
     *   Generates a random size for the asteroid within a given range.
     *   Physics body is a circle: `SKPhysicsBody(circleOfRadius:)`. Category is `Constants.PhysicsCategory.asteroid`.
     *   Spawns off-screen to the right.
