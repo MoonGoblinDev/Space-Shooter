@@ -3,13 +3,13 @@ import SwiftUI
 
 class PlayerNode: SKSpriteNode, Damageable { // Conform to Damageable
     var health: Int = Constants.playerInitialHealth {
-        didSet {
-            // Notify GameScene to update health label
-            if let scene = self.scene as? GameScene {
-                scene.updateHealthLabel()
+            didSet {
+                // Notify GameScene to update health UI
+                if let scene = self.scene as? GameScene {
+                    scene.updateHealthUI() // Changed from updateHealthLabel
+                }
             }
         }
-    }
     private var lastShootTime: TimeInterval = 0
     private var thrusterEmitter: SKEmitterNode?
 
@@ -34,17 +34,21 @@ class PlayerNode: SKSpriteNode, Damageable { // Conform to Damageable
         guard currentTime - lastShootTime > Constants.playerShootCooldown else { return }
         lastShootTime = currentTime
 
-        let projectile = ProjectileNode.newInstance(type: .player, size: CGSize(width: 8, height: 8))
+        // Player projectile size
+        let projectile = ProjectileNode.newInstance(type: .player, initialVisualSize: CGSize(width: 20, height: 8))
         
-        let projectileSpawnOffset: CGFloat = 5
-        projectile.position = CGPoint(x: self.position.x + self.size.width / 2, y: self.position.y - 20)
-        scene.addChild(projectile)
+        // Position to fire from the front-right of the player. Adjust yOffset as needed.
+        let yOffset: CGFloat = -12 // Adjusted y-offset relative to player center
+        let offsetX: CGFloat = self.size.width / 2 + projectile.calculateAccumulatedFrame().width / 2 + 5
 
-        let moveAction = SKAction.moveBy(x: Constants.projectileSpeed * 2, y: 0, duration: 2.0)
-        let detonateAction = SKAction.run { projectile.detonate() }
-        projectile.run(SKAction.sequence([moveAction, detonateAction]))
+        let projectileSpawnPoint = CGPoint(x: self.position.x + offsetX, y: self.position.y + yOffset)
+        
+        let velocity = CGVector(dx: Constants.projectileSpeed, dy: 0)
+        projectile.launch(from: projectileSpawnPoint, initialVelocity: velocity, scene: scene)
+
+        // Play shoot sound
+        // SoundManager.shared.playSound(.playerShoot)
     }
-
     // MARK: - Damageable
     func takeDamage(amount: Int, in scene: SKScene?) { // Added 'in scene' parameter
         health -= amount
