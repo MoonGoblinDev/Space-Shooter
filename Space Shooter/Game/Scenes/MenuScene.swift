@@ -1,142 +1,154 @@
+// Space Shooter/Game/Scenes/MenuScene.swift
 import SpriteKit
 import SwiftUI
 
 class MenuScene: SKScene {
 
     private var backgroundNodes: [SKSpriteNode] = []
+    private var individualBackgroundWidth: CGFloat = 0
     private var lastBackgroundUpdateTime: TimeInterval = 0
 
-    override func didMove(to view: SKView) {
-        backgroundColor = .black // Fallback color
-        anchorPoint = CGPoint(x: 0.5, y: 0.5) // Center anchor
+    private var titleLabelNode: SKLabelNode?
+    private var instructionLabelNode: SKLabelNode?
+    private var staticPlayerNode: PlayerNode?
 
-        setupScrollingBackground() // Call the new setup method
-        setupTitle()
-        setupInstructions()
-        setupStaticPlayer()
+    override func didMove(to view: SKView) {
+        backgroundColor = .black
+        anchorPoint = CGPoint(x: 0.5, y: 0.5)
+
+        setupScrollingBackground()
+        setupUIElements()
     }
 
     func setupScrollingBackground() {
+        for node in backgroundNodes {
+            node.removeFromParent()
+        }
+        backgroundNodes.removeAll()
 
         let backgroundTexture = SKTexture(imageNamed: "Nebula Blue")
+        backgroundTexture.filteringMode = .nearest
 
-        // Calculate scaled size to fit scene height while maintaining aspect ratio
         let aspectRatio = backgroundTexture.size().width / backgroundTexture.size().height
         let scaledHeight = size.height
-        let scaledWidth = scaledHeight * aspectRatio
+        self.individualBackgroundWidth = scaledHeight * aspectRatio
+        
+        // Use 3 segments for a more robust scrolling experience
+        let numberOfSegments = 3
 
-        for i in 0..<2 {
+        for i in 0..<numberOfSegments {
             let backgroundNode = SKSpriteNode(texture: backgroundTexture)
-            backgroundNode.size = CGSize(width: scaledWidth, height: scaledHeight)
-            // Position for anchorPoint (0.5, 0.5)
-            // Nodes are positioned relative to the scene's center (0,0)
-            // The first node's center is at x=0. The second node's center is to its right.
-            backgroundNode.position = CGPoint(x: CGFloat(i) * scaledWidth, y: 0)
+            // For anchor (0.5, 0.5), node.position is its center.
+            // We position them side-by-side, centered around the scene's origin initially.
+            // E.g., for 3 nodes, positions might be -W, 0, W or similar, depending on strategy.
+            // The simplest for looping is to lay them out starting from an arbitrary point and let scrolling handle it.
+            // The current logic positions node centers at 0*W, 1*W, 2*W relative to the scene's anchor (0,0).
+            backgroundNode.position = CGPoint(x: CGFloat(i) * individualBackgroundWidth, y: 0)
+            backgroundNode.size = CGSize(width: individualBackgroundWidth, height: scaledHeight)
             backgroundNode.zPosition = Constants.ZPositions.background
             backgroundNodes.append(backgroundNode)
             addChild(backgroundNode)
         }
     }
 
-    func setupTitle() {
-        let titleLabel = SKLabelNode(fontNamed: "HelveticaNeue-Bold")
-        titleLabel.text = "Space Shooter"
-        titleLabel.fontSize = 60
-        titleLabel.fontColor = .cyan
-        titleLabel.position = CGPoint(x: 0, y: 150) // Relative to center
-        titleLabel.zPosition = Constants.ZPositions.hud
-        addChild(titleLabel)
-    }
+    func setupUIElements() {
+        titleLabelNode?.removeFromParent()
+        instructionLabelNode?.removeFromParent()
+        staticPlayerNode?.removeFromParent()
 
-    func setupInstructions() {
-        let instructionLabel = SKLabelNode(fontNamed: "HelveticaNeue")
-        instructionLabel.text = "Press Enter to Play"
-        instructionLabel.fontSize = 30
-        instructionLabel.fontColor = .white
-        instructionLabel.position = CGPoint(x: 0, y: -50) // Relative to center
-        instructionLabel.zPosition = Constants.ZPositions.hud
-        addChild(instructionLabel)
+        titleLabelNode = SKLabelNode(fontNamed: "HelveticaNeue-Bold")
+        titleLabelNode?.text = "Space Shooter"
+        titleLabelNode?.fontSize = 60
+        titleLabelNode?.fontColor = .cyan
+        titleLabelNode?.zPosition = Constants.ZPositions.hud
+        addChild(titleLabelNode!)
 
-        // Optional: Add a blinking effect to the instruction label
+        instructionLabelNode = SKLabelNode(fontNamed: "HelveticaNeue")
+        instructionLabelNode?.text = "Press Enter to Play"
+        instructionLabelNode?.fontSize = 30
+        instructionLabelNode?.fontColor = .white
+        instructionLabelNode?.zPosition = Constants.ZPositions.hud
         let fadeOut = SKAction.fadeOut(withDuration: 0.7)
         let fadeIn = SKAction.fadeIn(withDuration: 0.7)
-        let blinkSequence = SKAction.sequence([fadeOut, fadeIn])
-        instructionLabel.run(SKAction.repeatForever(blinkSequence))
-    }
+        instructionLabelNode?.run(SKAction.repeatForever(SKAction.sequence([fadeOut, fadeIn])))
+        addChild(instructionLabelNode!)
 
-    func setupStaticPlayer() {
-        // Use the same PlayerNode creation for visual consistency, but it won't be interactive here.
-        // Position it to the left of the screen's center.
-        let player = PlayerNode.newInstance(size: CGSize(width: 60, height: 60)) // Slightly larger for menu
-        player.position = CGPoint(x: 0, y: 50) // Centered above instruction label
-        player.physicsBody = nil // Remove physics body for menu scene
-        addChild(player)
+        staticPlayerNode = PlayerNode.newInstance(size: CGSize(width: 40, height: 40))
+        staticPlayerNode?.physicsBody = nil
+        staticPlayerNode?.updateThruster(isMoving: true)
+        addChild(staticPlayerNode!)
+        
+        updateUIPositions()
+    }
+    
+    func updateUIPositions() {
+        titleLabelNode?.position = CGPoint(x: 0, y: size.height * 0.25)
+        staticPlayerNode?.position = CGPoint(x: 0, y: size.height * 0.05)
+        instructionLabelNode?.position = CGPoint(x: 0, y: -size.height * 0.15)
     }
 
     override func keyDown(with event: NSEvent) {
-        // KeyCode 36 is Return (Enter)
-        // KeyCode 76 is Enter on the numeric keypad
         if event.keyCode == 36 || event.keyCode == 76 {
             startGame()
         } else {
-            super.keyDown(with: event) // Important for other potential system key events
+            super.keyDown(with: event)
         }
     }
 
     func startGame() {
-        if let view = self.view {
-            // Ensure the size of the GameScene matches the view's bounds
-            let gameScene = GameScene(size: view.bounds.size)
-            gameScene.scaleMode = self.scaleMode // Or set explicitly, e.g., .resizeFill
-
-            // Add a transition
-            let transition = SKTransition.fade(withDuration: 1.0)
-            view.presentScene(gameScene, transition: transition)
-        }
+        guard let view = self.view else { return }
+        let gameScene = GameScene(size: view.bounds.size)
+        gameScene.scaleMode = self.scaleMode
+        let transition = SKTransition.fade(withDuration: 1.0)
+        view.presentScene(gameScene, transition: transition)
     }
 
     override func update(_ currentTime: TimeInterval) {
-            // Called before each frame is rendered
-            
-            // Calculate deltaTime for background scroll
-            if lastBackgroundUpdateTime.isZero {
-                lastBackgroundUpdateTime = currentTime
-            }
-            let deltaTime = currentTime - lastBackgroundUpdateTime
+        if lastBackgroundUpdateTime.isZero {
             lastBackgroundUpdateTime = currentTime
-
-            scrollBackground(deltaTime: deltaTime)
         }
+        let deltaTime = currentTime - lastBackgroundUpdateTime
+        lastBackgroundUpdateTime = currentTime
+        
+        let maxDeltaTime: TimeInterval = 1.0 / 30.0
+        let cappedDeltaTime = min(deltaTime, maxDeltaTime)
 
-        func scrollBackground(deltaTime: TimeInterval) {
-            guard !backgroundNodes.isEmpty else { return }
+        scrollBackground(deltaTime: cappedDeltaTime)
+    }
 
-            let scrollAmount = Constants.backgroundScrollSpeed * CGFloat(deltaTime)
-            let sceneLeftEdge = -size.width / 2 // For anchorPoint (0.5, 0.5)
+    func scrollBackground(deltaTime: TimeInterval) {
+        guard !backgroundNodes.isEmpty, individualBackgroundWidth > 0 else { return }
 
-            for backgroundNode in backgroundNodes {
-                backgroundNode.position.x -= scrollAmount
+        let scrollAmount = Constants.backgroundScrollSpeed * CGFloat(deltaTime)
+        let sceneLeftEdge = -size.width / 2
+        // This is individualBackgroundWidth * backgroundNodes.count (which is now 3)
+        let totalBackgroundWidth = individualBackgroundWidth * CGFloat(backgroundNodes.count)
 
-                // Check if the node's right edge has scrolled past the scene's left edge
-                if (backgroundNode.position.x + backgroundNode.size.width / 2) < sceneLeftEdge {
-                    // Reposition it to the right of the other background node
-                    // The total width of the two backgrounds is backgroundNode.size.width * 2
-                    backgroundNode.position.x += backgroundNode.size.width * CGFloat(backgroundNodes.count)
-                }
+        for backgroundNode in backgroundNodes {
+            backgroundNode.position.x -= scrollAmount
+
+            // Node's position is its center. Its right edge is position.x + individualBackgroundWidth / 2.
+            if (backgroundNode.position.x + individualBackgroundWidth / 2) < sceneLeftEdge {
+                backgroundNode.position.x += totalBackgroundWidth
             }
         }
     }
-#if DEBUG // Optional: Ensures this code is only compiled for Debug builds
-@available(macOS 11.0, *) // SpriteView is available from macOS 11
+    
+    override func didChangeSize(_ oldSize: CGSize) {
+        super.didChangeSize(oldSize)
+        setupScrollingBackground()
+        updateUIPositions()
+    }
+}
+
+#if DEBUG
+@available(macOS 11.0, *)
 struct MenuScene_Previews: PreviewProvider {
     static var previews: some View {
-        // Create a MenuScene instance
-        let menuScene = MenuScene(size: CGSize(width: 800, height: 600)) // Provide a sample size
-
-        // Use SpriteView to host the SKScene
+        let menuScene = MenuScene(size: CGSize(width: 800, height: 600))
         SpriteView(scene: menuScene)
-            .frame(width: 400, height: 300) // Define the preview window size
-            .ignoresSafeArea() // Often good for game previews
+            .frame(width: 400, height: 300)
+            .ignoresSafeArea()
     }
 }
 #endif

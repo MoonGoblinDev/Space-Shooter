@@ -1,3 +1,4 @@
+// Space Shooter/Game/Scenes/GameScene.swift
 import SpriteKit
 import GameplayKit
 
@@ -10,46 +11,51 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     private var score: Int = 0 {
         didSet {
-            scoreLabel.text = "Score: \(score)"
+            scoreLabel?.text = "Score: \(score)"
         }
     }
     
     private var keysPressed = Set<UInt16>()
-    private var lastUpdateTime: TimeInterval = 0 // Used for game logic and background
+    private var lastUpdateTime: TimeInterval = 0
     
     private var isGameOverPending = false
 
-    private var backgroundNodes: [SKSpriteNode] = [] // For scrolling background
+    private var backgroundNodes: [SKSpriteNode] = []
+    private var individualBackgroundWidth: CGFloat = 0
 
     override func didMove(to view: SKView) {
-        backgroundColor = .black // Fallback color
+        backgroundColor = .black
         physicsWorld.gravity = .zero
         physicsWorld.contactDelegate = self
-        
         anchorPoint = CGPoint(x: 0, y: 0)
 
-        setupScrollingBackground() // Call the new setup method
+        setupScrollingBackground()
         setupPlayer()
         setupUI()
         startSpawning()
     }
     
     func setupScrollingBackground() {
+        for node in backgroundNodes {
+            node.removeFromParent()
+        }
+        backgroundNodes.removeAll()
 
         let backgroundTexture = SKTexture(imageNamed: "Nebula Blue")
+        backgroundTexture.filteringMode = .nearest
 
-        // Calculate scaled size to fit scene height while maintaining aspect ratio
         let aspectRatio = backgroundTexture.size().width / backgroundTexture.size().height
         let scaledHeight = size.height
-        let scaledWidth = scaledHeight * aspectRatio
+        self.individualBackgroundWidth = scaledHeight * aspectRatio
         
-        for i in 0..<2 { // Create two nodes for seamless scrolling
+        // Use 3 segments for a more robust scrolling experience
+        let numberOfSegments = 3
+
+        for i in 0..<numberOfSegments {
             let backgroundNode = SKSpriteNode(texture: backgroundTexture)
-            backgroundNode.anchorPoint = .zero // Important for anchor (0,0) scenes
-            backgroundNode.size = CGSize(width: scaledWidth, height: scaledHeight)
-            // Position for anchorPoint (0,0)
-            // The first node starts at (0,0). The second is placed to its right.
-            backgroundNode.position = CGPoint(x: CGFloat(i) * scaledWidth, y: 0)
+            backgroundNode.anchorPoint = .zero
+            backgroundNode.size = CGSize(width: individualBackgroundWidth, height: scaledHeight)
+            backgroundNode.position = CGPoint(x: CGFloat(i) * individualBackgroundWidth, y: 0)
             backgroundNode.zPosition = Constants.ZPositions.background
             backgroundNodes.append(backgroundNode)
             addChild(backgroundNode)
@@ -58,32 +64,38 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func setupPlayer() {
         player = PlayerNode.newInstance(size: CGSize(width: 40, height: 40))
-        player.position = CGPoint(x: 100, y: size.height / 2)
+        player.position = CGPoint(x: player.size.width / 2 + 50, y: size.height / 2)
         addChild(player)
+        player.updateThruster(isMoving: false)
     }
 
     func setupUI() {
         scoreLabel = SKLabelNode(fontNamed: "HelveticaNeue-Bold")
         scoreLabel.fontSize = 24
         scoreLabel.fontColor = .white
-        scoreLabel.position = CGPoint(x: 80, y: size.height - 40)
         scoreLabel.horizontalAlignmentMode = .left
         scoreLabel.zPosition = Constants.ZPositions.hud
-        score = 0
         addChild(scoreLabel)
+        score = 0
 
         healthLabel = SKLabelNode(fontNamed: "HelveticaNeue-Bold")
         healthLabel.fontSize = 24
         healthLabel.fontColor = .white
-        healthLabel.position = CGPoint(x: size.width - 80, y: size.height - 40)
         healthLabel.horizontalAlignmentMode = .right
         healthLabel.zPosition = Constants.ZPositions.hud
-        updateHealthLabel()
         addChild(healthLabel)
+        updateHealthLabel()
+        
+        updateUIPositions()
+    }
+    
+    func updateUIPositions() {
+        scoreLabel?.position = CGPoint(x: 20, y: size.height - 40)
+        healthLabel?.position = CGPoint(x: size.width - 20, y: size.height - 40)
     }
     
     func updateHealthLabel() {
-        guard player != nil else { return }
+        guard player != nil, healthLabel != nil else { return }
         healthLabel.text = "Health: \(player.health)"
     }
 
@@ -121,8 +133,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         guard !isGameOverPending else { return }
         keysPressed.insert(event.keyCode)
         
-        if event.keyCode == 49 { // Spacebar
-            player.shoot(currentTime: self.lastUpdateTime, scene: self)
+        if event.keyCode == 49 {
+            guard let player = self.player, player.parent != nil, let scene = self.scene else { return }
+            player.shoot(currentTime: self.lastUpdateTime, scene: scene)
         }
     }
 
@@ -131,67 +144,73 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func update(_ currentTime: TimeInterval) {
-            // --- Game Logic DeltaTime ---
-            var gameLogicDeltaTime: TimeInterval = 0
-            if lastUpdateTime == 0 {
-                lastUpdateTime = currentTime
-            }
-            gameLogicDeltaTime = currentTime - lastUpdateTime
+        var gameLogicDeltaTime: TimeInterval = 0
+        if lastUpdateTime == 0 {
             lastUpdateTime = currentTime
-            // --- End Game Logic DeltaTime ---
-
-            if isGameOverPending { return }
-                
-            scrollBackground(deltaTime: gameLogicDeltaTime) // Scroll background using game logic's deltaTime
-            
-            let playerIsActuallyMoving = keysPressed.contains(123) || keysPressed.contains(124) || keysPressed.contains(125) || keysPressed.contains(126)
-            player?.updateThruster(isMoving: playerIsActuallyMoving)
-
-            processPlayerMovement(deltaTime: gameLogicDeltaTime)
         }
+        gameLogicDeltaTime = currentTime - lastUpdateTime
+        lastUpdateTime = currentTime
+
+        if isGameOverPending { return }
+            
+        let maxDeltaTime: TimeInterval = 1.0 / 30.0
+        let cappedDeltaTime = min(gameLogicDeltaTime, maxDeltaTime)
+
+        scrollBackground(deltaTime: cappedDeltaTime)
         
-        func scrollBackground(deltaTime: TimeInterval) {
-            guard !backgroundNodes.isEmpty else { return }
+        let playerIsActuallyMoving = keysPressed.contains(123) || keysPressed.contains(124) || keysPressed.contains(125) || keysPressed.contains(126)
+        player?.updateThruster(isMoving: playerIsActuallyMoving)
 
-            let scrollAmount = Constants.backgroundScrollSpeed * CGFloat(deltaTime)
+        processPlayerMovement(deltaTime: cappedDeltaTime)
+    }
+    
+    func scrollBackground(deltaTime: TimeInterval) {
+        guard !backgroundNodes.isEmpty, individualBackgroundWidth > 0 else { return }
 
-            for backgroundNode in backgroundNodes {
-                backgroundNode.position.x -= scrollAmount
+        let scrollAmount = Constants.backgroundScrollSpeed * CGFloat(deltaTime)
+        // This is individualBackgroundWidth * backgroundNodes.count (which is now 3)
+        let totalBackgroundWidth = individualBackgroundWidth * CGFloat(backgroundNodes.count)
 
-                // Check if the node has scrolled completely off-screen to the left
-                // For anchorPoint (0,0), this means its right edge is less than 0
-                if (backgroundNode.position.x + backgroundNode.size.width) < 0 {
-                    // Reposition it to the right of the *last* node in the current visual sequence.
-                    // Essentially, move it over by the total width of all background segments.
-                    backgroundNode.position.x += backgroundNode.size.width * CGFloat(backgroundNodes.count)
-                }
+        for backgroundNode in backgroundNodes {
+            backgroundNode.position.x -= scrollAmount
+
+            // If the background node's right edge is completely off-screen to the left
+            if (backgroundNode.position.x + individualBackgroundWidth) < 0 {
+                // Reposition it to the right end of the background chain
+                backgroundNode.position.x += totalBackgroundWidth
             }
         }
+    }
     
     func processPlayerMovement(deltaTime: TimeInterval) {
-        guard player != nil else { return }
+        guard let player = self.player, player.parent != nil else { return }
 
         var dx: CGFloat = 0
         var dy: CGFloat = 0
 
-        if keysPressed.contains(123) { dx -= Constants.playerSpeed * CGFloat(deltaTime) }
-        if keysPressed.contains(124) { dx += Constants.playerSpeed * CGFloat(deltaTime) }
-        if keysPressed.contains(126) { dy += Constants.playerSpeed * CGFloat(deltaTime) }
-        if keysPressed.contains(125) { dy -= Constants.playerSpeed * CGFloat(deltaTime) }
+        let effectiveSpeed = Constants.playerSpeed * CGFloat(deltaTime)
+
+        if keysPressed.contains(123) { dx -= effectiveSpeed }
+        if keysPressed.contains(124) { dx += effectiveSpeed }
+        if keysPressed.contains(126) { dy += effectiveSpeed }
+        if keysPressed.contains(125) { dy -= effectiveSpeed }
         
         if dx != 0 || dy != 0 {
             player.position.x += dx
             player.position.y += dy
             
-            player.position.x = max(player.size.width/2, player.position.x)
-            player.position.x = min(size.width - player.size.width/2, player.position.x)
-            player.position.y = max(player.size.height/2, player.position.y)
-            player.position.y = min(size.height - player.size.height/2, player.position.y)
+            let halfWidth = player.size.width / 2
+            let halfHeight = player.size.height / 2
+            
+            player.position.x = max(halfWidth, player.position.x)
+            player.position.x = min(size.width - halfWidth, player.position.x)
+            player.position.y = max(halfHeight, player.position.y)
+            player.position.y = min(size.height - halfHeight, player.position.y)
         }
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
-        if isGameOverPending { return } // Don't process new contacts if game over is already triggered
+        if isGameOverPending { return }
         
         var firstBody: SKPhysicsBody
         var secondBody: SKPhysicsBody
@@ -204,27 +223,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             secondBody = contact.bodyA
         }
 
-        // Player Projectile vs Enemy
         if firstBody.categoryBitMask == Constants.PhysicsCategory.enemy && secondBody.categoryBitMask == Constants.PhysicsCategory.projectile {
             if let enemy = firstBody.node as? EnemyNode,
                let projectile = secondBody.node as? ProjectileNode, projectile.type == .player {
                 projectileDidCollideWithEnemy(projectile: projectile, enemy: enemy)
             }
         }
-        // Player Projectile vs Asteroid
         else if firstBody.categoryBitMask == Constants.PhysicsCategory.asteroid && secondBody.categoryBitMask == Constants.PhysicsCategory.projectile {
             if let asteroid = firstBody.node as? AsteroidNode,
                let projectile = secondBody.node as? ProjectileNode, projectile.type == .player {
                 projectileDidCollideWithAsteroid(projectile: projectile, asteroid: asteroid)
             }
         }
-        // Player vs Enemy
         else if firstBody.categoryBitMask == Constants.PhysicsCategory.player && secondBody.categoryBitMask == Constants.PhysicsCategory.enemy {
             if let playerNode = firstBody.node as? PlayerNode, let enemyNode = secondBody.node as? EnemyNode {
                 playerDidCollideWithObstacle(player: playerNode, obstacle: enemyNode)
             }
         }
-        // Player vs Asteroid
         else if firstBody.categoryBitMask == Constants.PhysicsCategory.player && secondBody.categoryBitMask == Constants.PhysicsCategory.asteroid {
             if let playerNode = firstBody.node as? PlayerNode, let asteroidNode = secondBody.node as? AsteroidNode {
                  playerDidCollideWithObstacle(player: playerNode, obstacle: asteroidNode)
@@ -234,63 +249,44 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func projectileDidCollideWithEnemy(projectile: ProjectileNode, enemy: EnemyNode) {
         projectile.detonate()
-        enemy.takeDamage(amount: 1, in: self) // Enemy takes 1 damage
-        if enemy.health <= 0 { // Check if enemy was destroyed
+        enemy.takeDamage(amount: 1, in: self)
+        if enemy.health <= 0 {
             score += 10
         }
     }
 
     func projectileDidCollideWithAsteroid(projectile: ProjectileNode, asteroid: AsteroidNode) {
         projectile.detonate()
-        asteroid.takeDamage(amount: 1, in: self) // Asteroid takes 1 damage
-        if asteroid.health <= 0 {
-             // score += 5 // Optional score for destroying asteroid
-        }
+        asteroid.takeDamage(amount: 1, in: self)
     }
 
     func playerDidCollideWithObstacle(player: PlayerNode, obstacle: SKSpriteNode) {
-        guard !isGameOverPending else { return } // Double check
+        guard !isGameOverPending, player.health > 0 else { return }
 
-        // Player takes damage
-        // Only inflict damage if player is still alive
-        if player.health > 0 {
-             player.takeDamage(amount: 1, in: self) // Player takes 1 damage
-        }
+        player.takeDamage(amount: 1, in: self)
        
-        // Obstacle is also destroyed by colliding with player
         if let damageableObstacle = obstacle as? Damageable {
-            // Hit it hard enough to destroy it in one go from player collision
             damageableObstacle.takeDamage(amount: damageableObstacle.health, in: self)
         } else {
-            // Fallback for obstacles not conforming to Damageable
+            ExplosionNode.showExplosion(at: obstacle.position, in: self)
             obstacle.removeFromParent()
-        }
-        
-        // Check for game over condition (moved to PlayerNode's takeDamage, but can be double-checked here)
-        if player.health <= 0 && !isGameOverPending {
-            gameOver()
         }
     }
 
     func gameOver() {
-        guard !isGameOverPending else { return } // Ensure this is called only once
-        isGameOverPending = true // Set the flag
+        guard !isGameOverPending else { return }
+        isGameOverPending = true
         
-        print("Game Over - Transitioning to GameOverScene")
-        
-        // Stop all actions in this scene (like spawning)
         self.removeAllActions()
-        // Stop player movement input
         keysPressed.removeAll()
         
-        // Make player visually "explode" or disappear before transitioning scene
-        if player.parent != nil { // Check if player is still in scene
-             ExplosionNode.showExplosion(at: player.position, in: self)
-             player.removeFromParent()
+        if let playerNode = self.player, playerNode.parent != nil {
+             ExplosionNode.showExplosion(at: playerNode.position, in: self)
+             playerNode.removeFromParent()
+             self.player = nil
         }
 
-        // Delay transition slightly to allow explosion to be seen
-        let waitAction = SKAction.wait(forDuration: 0.5) // Adjust as needed
+        let waitAction = SKAction.wait(forDuration: 0.8)
         let transitionAction = SKAction.run { [weak self] in
             guard let self = self, let view = self.view else { return }
             let gameOverScene = GameOverScene(size: view.bounds.size, score: self.score)
@@ -298,7 +294,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let transition = SKTransition.doorsCloseHorizontal(withDuration: 0.8)
             view.presentScene(gameOverScene, transition: transition)
         }
-        
         run(SKAction.sequence([waitAction, transitionAction]))
+    }
+
+    override func didChangeSize(_ oldSize: CGSize) {
+        super.didChangeSize(oldSize)
+        setupScrollingBackground()
+        updateUIPositions()
     }
 }
