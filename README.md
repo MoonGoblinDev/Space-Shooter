@@ -1,6 +1,7 @@
 ## Space Shooter: Project Documentation
+<img width="793" alt="Screenshot 2025-05-08 at 22 39 15" src="https://github.com/user-attachments/assets/7e213a62-32aa-4539-8f81-4feba1d60528" />
 
-This document outlines the structure and functionality of the Space Shooter game, with a particular focus on how Apple's SpriteKit framework is utilized.
+This project outlines the structure and functionality of the Space Shooter game, with a particular focus on how Apple's SpriteKit framework is utilized.
 
 ### 1. Project Overview
 
