@@ -21,7 +21,7 @@ This file contains the standard `AppDelegate` class for a macOS application.
 *   `applicationDidFinishLaunching(_:)`: Called when the application has finished launching and is ready to run. It's a common place for initial application-wide setup. In this project, it's currently empty, meaning no special initialization is done at this very early stage.
 *   `applicationWillTerminate(_:)`: Called when the application is about to terminate. Useful for cleanup tasks. Also empty in this project.
 
-**SpriteKit Relevance:** The `AppDelegate` itself doesn't directly interact with SpriteKit, but it sets up the application environment in which the `ViewController` and subsequently the `SKView` will operate.
+**Note:** The `AppDelegate` itself doesn't directly interact with SpriteKit, but it sets up the application environment in which the `ViewController` and subsequently the `SKView` will operate.
 
 #### `ViewController.swift`
 This `NSViewController` subclass is responsible for setting up and managing the `SKView`, which is the view that renders SpriteKit content.
@@ -38,7 +38,7 @@ This `NSViewController` subclass is responsible for setting up and managing the 
     *   This method is called when the view's bounds change (e.g., window resize).
     *   It ensures that the `SKScene`'s `size` property is updated to match the new `SKView` bounds. This allows the scene content to adapt to different window sizes dynamically if the scene logic supports it (e.g., by repositioning elements based on `self.size`).
 
-**SpriteKit Relevance:** `ViewController` acts as the bridge between the macOS application structure and the SpriteKit world. Its primary role here is to create, configure, and display the `SKView` and present the initial `SKScene`.
+**Note:** `ViewController` acts as the bridge between the macOS application structure and the SpriteKit world. Its primary role here is to create, configure, and display the `SKView` and present the initial `SKScene`.
 
 ### 3. Game Scenes
 
@@ -70,7 +70,7 @@ This scene serves as the main menu of the game.
     *   `view.presentScene(gameScene, transition: transition)` displays the `GameScene`.
 *   **`didChangeSize(_ oldSize: CGSize)`**: Called when the scene's size changes (typically due to window resize). It re-runs `setupStaticBackground()` and `updateUIPositions()` to adapt the layout.
 
-**SpriteKit Relevance:** `MenuScene` demonstrates:
+**Note:** `MenuScene` demonstrates:
 *   Scene setup (`didMove(to:)`).
 *   Use of `SKSpriteNode` for backgrounds and `SKLabelNode` for text.
 *   Basic animations with `SKAction`.
@@ -145,7 +145,7 @@ This is the heart of the game, where actual gameplay occurs.
 *   **`didChangeSize(_ oldSize: CGSize)`**: Adapts to scene size changes by re-running `setupScrollingBackground()` and `updateUIPositions()`, and re-clamping player position.
 *   **`NSImage` Extension (`tinted(with:)`)**: A helper method to create a new `NSImage` by tinting an existing one with a specified color. This is used for the heart UI elements, allowing SF Symbols (which can act as templates) to be colored dynamically.
 
-**SpriteKit Relevance:** `GameScene` is where most SpriteKit features come together:
+**Note:** `GameScene` is where most SpriteKit features come together:
 *   Scene lifecycle and setup.
 *   Node management (`addChild`, `removeFromParent`, `enumerateChildNodes`).
 *   Texture loading (`SKTexture`).
@@ -174,7 +174,7 @@ Displayed when the player's health reaches zero.
 *   **`backToMenu()`**: Transitions back to `MenuScene` using a fade transition.
 *   **`didChangeSize(_ oldSize: CGSize)`**: Re-setups the background and re-positions UI elements when the scene size changes.
 
-**SpriteKit Relevance:**
+**Note:**
 *   Displaying information using `SKLabelNode`.
 *   Using `SKAction` for delayed animations (fade-in).
 *   Handling mouse input (`mouseDown`) and node identification using `node.name`.
@@ -215,7 +215,7 @@ Represents the player's spaceship.
     *   `didMoveToScene()`: Sets the `targetNode` of the emitter to the scene. This is important for particles to be rendered correctly relative to the scene if the emitter is part of a moving node hierarchy that might be transformed.
     *   `updateThruster()`: Adjusts `particleBirthRate` of the emitter to make the thruster more intense when moving.
 
-**SpriteKit Relevance:**
+**Note:**
 *   `SKSpriteNode` for visual representation.
 *   `SKTexture` for images.
 *   `SKPhysicsBody` for collision detection.
@@ -243,7 +243,7 @@ Represents enemy spaceships.
     *   Reduces health. Calls `animateDamage()`.
     *   If health is zero, stops movement and shooting, then calls `explode()` (which uses `ExplosionNode` and removes the enemy).
 
-**SpriteKit Relevance:**
+**Note:**
 *   `SKSpriteNode`, `SKTexture`, `SKPhysicsBody`.
 *   Advanced movement with `SKAction.customAction`.
 *   Timed actions and sequences for behavior patterns (shooting).
@@ -266,7 +266,7 @@ Represents space asteroids.
     *   Reduces health. Calls `animateDamage()`.
     *   If health is zero, stops movement and calls `explode()`.
 
-**SpriteKit Relevance:**
+**Note:**
 *   `SKSpriteNode`, `SKTexture`.
 *   Circular `SKPhysicsBody`.
 *   Combining `SKAction`s for movement and rotation.
@@ -295,7 +295,7 @@ Represents projectiles fired by the player and enemies.
     *   If not `offScreen` (i.e., it hit something or its lifetime expired mid-screen), it shows an impact explosion using another `SKEmitterNode` ("ProjectileExplode.sks").
     *   Removes itself from the parent node after a short delay.
 
-**SpriteKit Relevance:**
+**Note:**
 *   Using `SKNode` as a container.
 *   `SKEmitterNode` as the primary visual for projectiles.
 *   Particle file loading and configuration (`.sks` files).
@@ -313,7 +313,7 @@ This is a utility class, not an `SKNode` subclass itself. It provides a static m
     *   Calculates an `estimatedExplosionDuration` based on particle lifetime properties.
     *   Runs an `SKAction.sequence` on the emitter: `wait` for the duration, then `removeFromParent()`. This ensures the particle effect plays out completely before the emitter node is removed from the scene.
 
-**SpriteKit Relevance:**
+**Note:**
 *   Centralized way to trigger a common particle effect (`SKEmitterNode`).
 *   Managing the lifecycle of temporary effect nodes using `SKAction`.
 
@@ -336,7 +336,7 @@ This protocol defines a common interface for game entities that can take damage 
         *   Calls `ExplosionNode.showExplosion()` at the node's current position.
         *   Removes the node from its parent (`self.removeFromParent()`).
 
-**SpriteKit Relevance:**
+**Note:**
 *   Illustrates protocol-oriented programming in a SpriteKit context.
 *   `SKAction`s are heavily used in the default `animateDamage` implementation for visual effects (movement, color changes).
 *   Demonstrates how common behaviors (like exploding) can be centralized.
@@ -351,7 +351,7 @@ A struct holding globally accessible constants.
 *   **Game Parameters**: Speeds for player, projectiles, enemies, asteroids. Cooldowns for shooting. Initial health values. Spawn intervals. Parameters for enemy sine wave movement. Background scroll speed.
 *   **HUD Constants**: Dimensions and spacing for HUD elements like health hearts.
 
-**SpriteKit Relevance:** Centralizing these values makes tweaking game balance and appearance easier. `PhysicsCategory` and `ZPositions` are fundamental to SpriteKit's physics and rendering systems.
+**Note:** Centralizing these values makes tweaking game balance and appearance easier. `PhysicsCategory` and `ZPositions` are fundamental to SpriteKit's physics and rendering systems.
 
 #### `SKNodeExtensions.swift`
 This file is currently empty but is a placeholder for any custom extensions that might be added to `SKNode` or its subclasses to provide shared utility functions.
@@ -362,7 +362,7 @@ This file is currently empty but is a placeholder for any custom extensions that
     *   It works by creating a copy of the image, locking focus on it, setting the fill color, and then drawing the image with the `.sourceAtop` compositing operation. This operation draws the source image only where it overlaps the existing (now color-filled) content, effectively tinting it.
     *   This is particularly useful for SF Symbols when `isTemplate` is true, as they are designed to be styled this way.
 
-**SpriteKit Relevance:** While not a direct SpriteKit API, it's a common helper when preparing `SKTexture`s from `NSImage`s, especially for UI elements that need dynamic coloring. The resulting tinted `NSImage` is then converted to an `SKTexture`.
+**Note:** While not a direct SpriteKit API, it's a common helper when preparing `SKTexture`s from `NSImage`s, especially for UI elements that need dynamic coloring. The resulting tinted `NSImage` is then converted to an `SKTexture`.
 
 ### 7. SpriteKit Key Concepts Summary
 
