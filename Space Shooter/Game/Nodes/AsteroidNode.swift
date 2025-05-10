@@ -1,12 +1,13 @@
 import SpriteKit
 
-class AsteroidNode: SKSpriteNode, Damageable { // Conform to Damageable
+class AsteroidNode: SKSpriteNode, Damageable {
     var health: Int = Constants.asteroidInitialHealth
 
     static func newInstance(sizeRange:(min:CGFloat, max:CGFloat), sceneSize: CGSize) -> AsteroidNode {
         let actualSize = CGFloat.random(in: sizeRange.min...sizeRange.max)
         
-        let texture = SKTexture(imageNamed: "Asteroid 3") // Assuming you have "Asteroid 3.png"
+        let asteroidSprites: [String] = ["Asteroid 1", "Asteroid 2", "Asteroid 3"]
+        let texture = SKTexture(imageNamed: asteroidSprites.randomElement()!)
         let asteroid = AsteroidNode(texture: texture, color: .clear, size: CGSize(width: actualSize, height: actualSize))
         asteroid.name = "asteroid"
         
@@ -30,20 +31,19 @@ class AsteroidNode: SKSpriteNode, Damageable { // Conform to Damageable
         self.run(SKAction.repeatForever(rotateAction))
 
         let moveAction = SKAction.moveBy(x: -(self.scene!.size.width + self.size.width), y: 0, duration: (self.scene!.size.width + self.size.width) / Constants.asteroidSpeed)
-        let removeAction = SKAction.removeFromParent() // Will be handled by explode if health is 0
+        let removeAction = SKAction.removeFromParent() 
         self.run(SKAction.sequence([moveAction, removeAction]), withKey: "movement")
     }
 
     // MARK: - Damageable
-    func takeDamage(amount: Int, in scene: SKScene?) { // Added 'in scene'
+    func takeDamage(amount: Int, in scene: SKScene?) {
         health -= amount
         
         if health > 0 {
-            animateDamage(tintRed: false, shakeIntensity: 6.0) // Asteroid just shakes
+            animateDamage(tintRed: false, shakeIntensity: 6.0)
         } else {
-            self.removeAction(forKey: "movement") // Stop movement if destroyed
-            explode(in: scene) // scene parameter passed down
+            self.removeAction(forKey: "movement")
+            explode(in: scene)
         }
     }
-     // explode() and animateDamage(tintRed: Bool) are provided by the Damageable extension
 }

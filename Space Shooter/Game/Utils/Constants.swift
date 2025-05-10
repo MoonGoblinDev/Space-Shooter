@@ -1,15 +1,13 @@
-// Space Shooter/Game/Utils/Constants.swift
 import Foundation
 
 struct Constants {
     struct PhysicsCategory {
         static let none         : UInt32 = 0
         static let all          : UInt32 = UInt32.max
-        static let player       : UInt32 = 0b1       // 1
-        static let enemy        : UInt32 = 0b10      // 2
-        static let asteroid     : UInt32 = 0b100     // 4
-        static let projectile   : UInt32 = 0b1000    // 8
-        // Add HealthItem later: static let healthItem : UInt32 = 0b10000 // 16
+        static let player       : UInt32 = 0b1
+        static let enemy        : UInt32 = 0b10
+        static let asteroid     : UInt32 = 0b100
+        static let projectile   : UInt32 = 0b1000
     }
 
     struct ZPositions {
@@ -19,10 +17,9 @@ struct Constants {
             static let projectile   : CGFloat = 1.0
             static let player       : CGFloat = 2.0
             static let hud          : CGFloat = 10.0
-            static let hudForeground: CGFloat = 10.1 // For UI elements on top of HUD
+            static let hudForeground: CGFloat = 10.1
         }
 
-        // ... (Speeds and Cooldowns remain the same) ...
         static let playerSpeed: CGFloat = 250.0
         static let projectileSpeed: CGFloat = 500.0
         static let enemyProjectileSpeed: CGFloat = -400.0
@@ -44,9 +41,8 @@ struct Constants {
         static let enemySineFrequency: CGFloat = 1.0
         static let backgroundScrollSpeed: CGFloat = 20.0
 
-        // New HUD Health Hearts Constants
-        static let hudHeartSize = CGSize(width: 30, height: 27) // Adjusted for better visual
+        static let hudHeartSize = CGSize(width: 30, height: 27)
         static let hudHeartSpacing: CGFloat = 8.0
-        static let hudTopMargin: CGFloat = 35.0 // Consistent top margin for HUD elements
+        static let hudTopMargin: CGFloat = 35.0
         static let hudSideMargin: CGFloat = 20.0
     }

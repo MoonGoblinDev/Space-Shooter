@@ -1,16 +1,13 @@
-// Space Shooter/Game/Scenes/GameScene.swift
 import SpriteKit
-import GameplayKit
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private var player: PlayerNode!
     
     private var scoreLabel: SKLabelNode!
-    // private var healthLabel: SKLabelNode! // Removed
-    private var healthNodes: [SKSpriteNode] = [] // To store heart sprites
+    private var healthNodes: [SKSpriteNode] = []
     private var fullHeartTexture: SKTexture?
-    private var emptyHeartTexture: SKTexture? // Optional: for a different "empty" heart look
+    private var emptyHeartTexture: SKTexture?
 
     private var score: Int = 0 {
         didSet {
@@ -42,26 +39,22 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func preloadHeartTextures() {
         if #available(macOS 11.0, *) {
             if let fullHeartImage = NSImage(systemSymbolName: "heart.fill", accessibilityDescription: "Full Health") {
-                fullHeartImage.isTemplate = true // Allows tinting with node.color
-                // Forcing a tint to red directly for the texture
+                fullHeartImage.isTemplate = true
                 let redTintedFullHeartImage = fullHeartImage.tinted(with: .red)
                 self.fullHeartTexture = SKTexture(image: redTintedFullHeartImage)
             } else {
                 print("Error: SF Symbol 'heart.fill' not found.")
-                // Fallback texture if needed
             }
 
-            if let emptyHeartImage = NSImage(systemSymbolName: "heart", accessibilityDescription: "Empty Health") { // Using "heart" for empty
+            if let emptyHeartImage = NSImage(systemSymbolName: "heart", accessibilityDescription: "Empty Health") {
                 emptyHeartImage.isTemplate = true
                 let grayTintedEmptyHeartImage = emptyHeartImage.tinted(with: .darkGray)
-                self.emptyHeartTexture = SKTexture(image: grayTintedEmptyHeartImage) // Tinted gray
+                self.emptyHeartTexture = SKTexture(image: grayTintedEmptyHeartImage)
             } else {
                 print("Error: SF Symbol 'heart' not found.")
-                // Fallback texture if needed
             }
         } else {
             // Fallback for older macOS versions if you don't have SF Symbols
-            // Or use placeholder colored squares
             print("Warning: SF Symbols require macOS 11+. Health icons might not appear correctly.")
             let fallbackFull = SKSpriteNode(color: .red, size: Constants.hudHeartSize)
             let fallbackEmpty = SKSpriteNode(color: .gray, size: Constants.hudHeartSize)
@@ -71,7 +64,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func setupScrollingBackground() {
-        // ... (no changes here)
         for node in backgroundNodes {
             node.removeFromParent()
         }
@@ -98,7 +90,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func setupPlayer() {
-        // ... (no changes here)
         player = PlayerNode.newInstance(size: CGSize(width: 150, height: 75))
         player.position = CGPoint(x: player.size.width, y: size.height / 2)
         addChild(player)
@@ -113,23 +104,22 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLabel.horizontalAlignmentMode = .left
         scoreLabel.zPosition = Constants.ZPositions.hud
         addChild(scoreLabel)
-        score = 0 // Triggers didSet to update text
+        score = 0
 
         // Health Hearts
-        healthNodes.forEach { $0.removeFromParent() } // Clear old hearts if any (e.g., on resize)
+        healthNodes.forEach { $0.removeFromParent() }
         healthNodes.removeAll()
 
         for _ in 0..<Constants.playerInitialHealth {
-            let heartNode = SKSpriteNode(texture: fullHeartTexture ?? SKTexture()) // Use preloaded texture
+            let heartNode = SKSpriteNode(texture: fullHeartTexture ?? SKTexture())
             heartNode.size = Constants.hudHeartSize
-            heartNode.zPosition = Constants.ZPositions.hudForeground // Ensure hearts are visible
-            // Initial color/texture is handled by updateHealthUI
+            heartNode.zPosition = Constants.ZPositions.hudForeground
             healthNodes.append(heartNode)
             addChild(heartNode)
         }
         
-        updateUIPositions() // Position score and hearts
-        updateHealthUI()    // Set initial heart states
+        updateUIPositions()
+        updateHealthUI()
     }
     
     func updateUIPositions() {
@@ -142,30 +132,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    // Renamed from updateHealthLabel
     func updateHealthUI() {
         guard player != nil else { return }
 
         for (index, heartNode) in healthNodes.enumerated() {
             if index < player.health {
                 heartNode.texture = fullHeartTexture
-                // heartNode.color = .red // Not needed if texture is already red
-                // heartNode.alpha = 1.0
             } else {
                 if let emptyTex = emptyHeartTexture {
                     heartNode.texture = emptyTex
-                } else { // Fallback if emptyHeartTexture is nil
-                    heartNode.texture = fullHeartTexture // Show full heart but make it look "empty"
-                    heartNode.alpha = 0.3 // Example: make "empty" hearts faded
+                } else {
+                    heartNode.texture = fullHeartTexture
+                    heartNode.alpha = 0.3
                 }
             }
-            // Ensure colorBlendFactor is 0 if textures are pre-tinted, or 1 if you are tinting a template texture here.
-            // Since we are pre-tinting the NSImage to create the SKTexture, colorBlendFactor is not primarily used here.
             heartNode.colorBlendFactor = 0.0
         }
     }
-
-    // ... (startSpawning, spawnEnemy, spawnAsteroid, keyDown, keyUp, update, scrollBackground, processPlayerMovement remain the same) ...
     func startSpawning() {
         if action(forKey: "spawnEnemyAction") == nil {
             let spawnEnemyAction = SKAction.run(spawnEnemy)
@@ -368,7 +351,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         enumerateChildNodes(withName: "asteroid") { (node, _) in node.removeAllActions() }
         enumerateChildNodes(withName: "projectile_*") { (node, _) in node.removeAllActions(); node.removeFromParent() }
-        healthNodes.forEach { $0.isHidden = true } // Hide hearts on game over
+        healthNodes.forEach { $0.isHidden = true }
 
         if let playerNode = self.player, playerNode.parent != nil {
              ExplosionNode.showExplosion(at: playerNode.position, in: self)
@@ -389,9 +372,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
-        // Existing elements
         setupScrollingBackground()
-        updateUIPositions() // This will re-position score and hearts
+        updateUIPositions()
 
         // Player boundary check update
         if let player = player {
@@ -404,12 +386,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 }
 
 // Helper extension for NSImage tinting (macOS specific)
-@available(macOS 10.10, *) // NSImage.tinted needs a good baseline
+@available(macOS 10.10, *)
 extension NSImage {
     func tinted(with color: NSColor) -> NSImage {
-        // Forcing isTemplate = true is crucial for system symbols if they are not already templates.
-        // If the image comes from a file and has color, this approach might fully overlay it.
-        // For SF Symbols, this works well.
         let newImage = self.copy() as! NSImage
         newImage.lockFocus()
         color.set()

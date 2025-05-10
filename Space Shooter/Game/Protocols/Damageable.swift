@@ -14,7 +14,7 @@ extension Damageable where Self: SKNode {
         let moveRight = SKAction.moveBy(x: shakeIntensity, y: 0, duration: 0.05)
         let moveLeft = SKAction.moveBy(x: -shakeIntensity * 2, y: 0, duration: 0.1)
         let moveCenter = SKAction.moveBy(x: shakeIntensity, y: 0, duration: 0.05)
-        let shakeAction = SKAction.sequence([moveRight, moveLeft, moveCenter, moveRight, moveLeft, moveCenter]) // Shake twice
+        let shakeAction = SKAction.sequence([moveRight, moveLeft, moveCenter, moveRight, moveLeft, moveCenter]) 
         
         var actions: [SKAction] = [shakeAction]
 

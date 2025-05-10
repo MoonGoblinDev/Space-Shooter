@@ -1,4 +1,3 @@
-// Space Shooter/Game/Nodes/ProjectileNode.swift
 import SpriteKit
 
 enum ProjectileType {
@@ -31,13 +30,8 @@ class ProjectileNode: SKNode {
         if let emitterNode = SKEmitterNode(fileNamed: emitterFileName) {
             projectile.addChild(emitterNode)
             projectile.emitter = emitterNode
-            // If the particle system itself has a size, use that. Otherwise, it's more abstract.
-            // For physics body, we use 'initialVisualSize' passed in.
-            // Ensure emitter particles are emitted along the projectile's movement axis.
-            // If particles shoot "up" from the sks file, and projectile moves horizontally:
-            // emitterNode.zRotation = -CGFloat.pi / 2 for right, or CGFloat.pi / 2 for left
             if type == .enemy {
-                 emitterNode.zRotation = CGFloat.pi // Assuming EnemyProjectile.sks emits to the right by default
+                 emitterNode.zRotation = CGFloat.pi
             }
 
         } else {
@@ -45,9 +39,9 @@ class ProjectileNode: SKNode {
             let fallbackVisual = SKSpriteNode(color: defaultColor, size: initialVisualSize)
             projectile.addChild(fallbackVisual)
         }
-        // Use the provided initialVisualSize for the physics body extent
+        
         projectile.physicsBody = SKPhysicsBody(rectangleOf: initialVisualSize)
-        projectile.physicsBody?.isDynamic = true // Will be false if using kinematic movement via actions
+        projectile.physicsBody?.isDynamic = true
         projectile.physicsBody?.affectedByGravity = false
         projectile.physicsBody?.categoryBitMask = Constants.PhysicsCategory.projectile
         projectile.physicsBody?.collisionBitMask = Constants.PhysicsCategory.none
@@ -79,7 +73,7 @@ class ProjectileNode: SKNode {
         scene.addChild(self)
 
         // Apply an impulse to start the physics-based movement
-        self.physicsBody?.isDynamic = true // Ensure it's dynamic for velocity to work
+        self.physicsBody?.isDynamic = true
         self.physicsBody?.velocity = initialVelocity
 
         // Add an action to remove the projectile if it goes too far off-screen

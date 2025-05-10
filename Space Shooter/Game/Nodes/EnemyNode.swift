@@ -1,6 +1,5 @@
-// Space Shooter/Game/Nodes/EnemyNode.swift
 import SpriteKit
-import SwiftUI // Keep if you use previews
+import SwiftUI
 
 class EnemyNode: SKSpriteNode, Damageable {
     var health: Int = Constants.enemyInitialHealth
@@ -74,8 +73,7 @@ class EnemyNode: SKSpriteNode, Damageable {
         guard self.parent != nil else { return } // Don't shoot if not in scene
 
         // Create an enemy projectile
-        // Assuming EnemyProjectile.sks points left, or adjust emitter rotation in ProjectileNode
-        let projectile = ProjectileNode.newInstance(type: .enemy, initialVisualSize: CGSize(width: 15, height: 5)) // Adjust size as needed
+        let projectile = ProjectileNode.newInstance(type: .enemy, initialVisualSize: CGSize(width: 15, height: 5))
 
         // Position the projectile to fire from the front-left of the enemy
         let offsetX:CGFloat = -self.size.width / 2 - projectile.calculateAccumulatedFrame().width / 2 - 5
@@ -84,8 +82,6 @@ class EnemyNode: SKSpriteNode, Damageable {
         let velocity = CGVector(dx: Constants.enemyProjectileSpeed, dy: 0)
         projectile.launch(from: projectileSpawnPoint, initialVelocity: velocity, scene: scene)
 
-        // Play shoot sound if you have one
-        // SoundManager.shared.playSound(.enemyShoot)
     }
 
     // MARK: - Damageable
@@ -96,14 +92,12 @@ class EnemyNode: SKSpriteNode, Damageable {
             animateDamage(tintRed: true, shakeIntensity: 4.0)
         } else {
             self.removeAction(forKey: "movement")
-            self.stopShooting() // Stop shooting when destroyed
-            explode(in: scene) // This will call ExplosionNode.showExplosion and self.removeFromParent()
+            self.stopShooting()
+            explode(in: scene)
         }
     }
-    // explode() and animateDamage() are provided by the Damageable extension
 }
 
-// ... (Keep the Previews if you use them) ...
 #if DEBUG
 @available(macOS 11.0, *)
 struct EnemyNode_Previews: PreviewProvider {
@@ -115,7 +109,7 @@ struct EnemyNode_Previews: PreviewProvider {
         let enemy = EnemyNode.newInstance(size: CGSize(width: 40, height: 40), sceneSize: CGSize(width: 200, height: 200))
         enemy.position = CGPoint(x: scene.size.width * 0.75, y: scene.size.height / 2)
         scene.addChild(enemy)
-        enemy.startShooting(in: scene) // For previewing shooting
+        enemy.startShooting(in: scene) 
         
         return SpriteView(scene: scene)
             .frame(width: 200, height: 200)

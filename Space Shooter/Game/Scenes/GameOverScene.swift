@@ -4,7 +4,7 @@ class GameOverScene: SKScene {
 
     var finalScore: Int = 0
     private var backgroundNode: SKSpriteNode?
-    private var gameOverTitleNode: SKLabelNode? // Added property for the title
+    private var gameOverTitleNode: SKLabelNode?
     private var scoreLabelNode: SKLabelNode?
     private var backButtonNode: SKLabelNode?
 
@@ -43,7 +43,6 @@ class GameOverScene: SKScene {
             self.scoreLabelNode?.isHidden = false
             self.backButtonNode?.isHidden = false
             
-            // Optional: Add a fade-in animation for these elements
             let fadeInDuration = 0.5
             self.gameOverTitleNode?.run(SKAction.fadeIn(withDuration: fadeInDuration))
             self.scoreLabelNode?.run(SKAction.fadeIn(withDuration: fadeInDuration))
@@ -84,7 +83,7 @@ class GameOverScene: SKScene {
         gameOverTitleNode?.position = CGPoint(x: 0, y: self.size.height * 0.3)
         gameOverTitleNode?.zPosition = Constants.ZPositions.hud
         gameOverTitleNode?.isHidden = !visible
-        if !visible { gameOverTitleNode?.alpha = 0 } // Start fully transparent if animating fade-in
+        if !visible { gameOverTitleNode?.alpha = 0 } 
         if let title = gameOverTitleNode {
             addChild(title)
         }
